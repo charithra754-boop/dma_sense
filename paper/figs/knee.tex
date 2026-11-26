@@ -1,5 +1,7 @@
-\begin{tikzpicture}\begin{axis}[dmaplot,xlabel={Camera frame rate (fps)},ylabel={Bus utilisation $\rho$},
- ymin=0,ymax=1.05,legend style={at={(0.02,0.4)},anchor=north west}]
-\addplot table[col sep=comma,x=fps,y=rho]{data/knee.csv};\addlegendentry{$\rho$ (measured)}
-\addplot[dashed,no marks,red] coordinates{(15,1)(120,1)};\addlegendentry{$\rho=1$}
+\begin{tikzpicture}\begin{axis}[dmaplot,xlabel={Camera frame rate (fps)},ylabel={Utilisation $\rho$ / drop rate},
+ ymin=0,ymax=1.05,legend style={at={(0.02,0.98)},anchor=north west}]
+\addplot[blue,mark=*] table[col sep=comma,x=fps,y=rho]{data/knee.csv};\addlegendentry{$\rho$, power-capped}
+\addplot[blue,dashed,mark=o] table[col sep=comma,x=fps,y=rho_pinned]{data/knee.csv};\addlegendentry{$\rho$, clock pinned}
+\addplot[red,mark=square*] table[col sep=comma,x=fps,y=drop]{data/knee.csv};\addlegendentry{drop rate, power-capped}
+\addplot[red,dashed,mark=square] table[col sep=comma,x=fps,y=drop_pinned]{data/knee.csv};\addlegendentry{drop rate, clock pinned}
 \end{axis}\end{tikzpicture}\illusnote

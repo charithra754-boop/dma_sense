@@ -1,4 +1,4 @@
 \begin{tikzpicture}\begin{axis}[dmaplot,xlabel={Policy},ylabel={Energy per processed frame (mJ)},
- ybar,bar width=12pt,symbolic x coords={Drop,FP,RR,Capped,Adaptive},xtick=data,ymin=0]
+ ybar,bar width=12pt,symbolic x coords={Drop,FP,RR,Capped,Adaptive,Deadline},xtick=data,x tick label style={font=\tiny},ymin=0]
 \addplot[fill=teal!50] table[col sep=comma,x=policy,y=energy]{data/energy.csv};
 \end{axis}\end{tikzpicture}\illusnote

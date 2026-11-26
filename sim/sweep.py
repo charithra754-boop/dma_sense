@@ -59,6 +59,27 @@ def grid(name, seeds, seconds, fps_list=(60, 120, 180)):
                 for dl in DROP_GRID:
                     jobs.append((over, dict(policy="drop", burst=1024, seed=ci, seconds=seconds, mk=mk,
                                             drop_frac=dl)))
+    elif name == "ablation":
+        # at 120 fps (the table's frame rate), synthetic traffic, B_c = 1024
+        sets = [("cache.size_KB", v) for v in (4, 16, 64)] + [("cache.write_policy", "wt")] \
+            + [("cache.mshrs", v) for v in (2, 4, 8, 16)] + [("queue.limit_frames", v) for v in (1, 2, 4)] \
+            + [("sim.bg_MBps", v) for v in (0.0, 10.0, 20.0)] + [("imu.rate_hz", v) for v in (200, 500, 1000)]
+        for key, v in sets:
+            for pol in ("fp", "cap", "adapt", "edf"):
+                for s in range(seeds):
+                    jobs.append(({"camera.fps": 120, key: v}, dict(policy=pol, burst=1024, seed=s, seconds=seconds)))
+        for v in (32, 64, 128, 256):
+            for s in range(seeds):
+                jobs.append(({"camera.fps": 120, "sim.split_B": v}, dict(policy="adapt", burst=1024, seed=s, seconds=seconds)))
+    elif name == "pinned":
+        # clock pinned at f_max (no power cap): does the gap to the bound close?
+        for B in cfg["camera"]["burst_sweep_B"]:
+            for pol in ("fp", "rr", "cap"):
+                for s in range(seeds):
+                    jobs.append(({"camera.fps": 60, "power.dvfs": False}, dict(policy=pol, burst=B, seed=s, seconds=seconds)))
+        for f in cfg["camera"]["fps_sweep"]:
+            for s in range(seeds):
+                jobs.append(({"camera.fps": f, "power.dvfs": False}, dict(policy="fp", burst=1024, seed=s, seconds=seconds)))
     return jobs
 
 

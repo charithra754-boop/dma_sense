@@ -1,6 +1,6 @@
 \begin{tikzpicture}\begin{axis}[dmaplot,xlabel={Frame drop rate (\%)},ylabel={Mean frame age at inference (ms)},
- legend style={at={(0.98,0.98)},anchor=north east}]
-\addplot table[col sep=comma,x=drop,y=age]{data/policy_drop.csv};\addlegendentry{Frame dropping}
-\addplot table[col sep=comma,x=drop,y=age]{data/policy_adapt.csv};\addlegendentry{Adaptive burst}
-\addplot table[col sep=comma,x=drop,y=age]{data/policy_edf.csv};\addlegendentry{Age/deadline-aware}
+ legend style={at={(0.02,0.98)},anchor=north west}]
+\addplot[black,mark=*] table[col sep=comma,x=drop,y=age]{data/policy_drop.csv};\addlegendentry{Frame dropping, $\delta=0$--$0.6$}
+\addplot[only marks,blue,mark=triangle*,mark size=3pt] table[col sep=comma,x=drop,y=age]{data/policy_adapt.csv};\addlegendentry{Adaptive split}
+\addplot[only marks,red,mark=diamond*,mark size=3pt] table[col sep=comma,x=drop,y=age]{data/policy_edf.csv};\addlegendentry{Age/deadline-aware}
 \end{axis}\end{tikzpicture}\illusnote

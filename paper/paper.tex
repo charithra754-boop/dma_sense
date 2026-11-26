@@ -6,7 +6,7 @@
 \maketitle
 
 \begin{abstract}
-A drone SoC shares one memory path between a camera DMA engine, a high-rate IMU/telemetry master and an inference core. Large camera bursts can block small IMU packets, so the usual fixes are to drop frames, cap bursts, or schedule with ages and deadlines. We built a deterministic event-driven simulator of this SoC and ask when scheduling beats simply dropping frames at equal bandwidth and energy. We state three falsifiable hypotheses, predict results with an analytic bound before running the simulator, and log the cause of every stall. At the saturation knee of \tbd[X] fps, the IMU \pone{} latency is \tbd[X]~$\mu$s under fixed priority with 1~KB bursts, \tbd[X]~$\mu$s with burst capping, and \tbd[X]~$\mu$s when frames are dropped. Traffic is driven by frame-change intensity from ERA/CapERA aerial clips and a logged IMU stream. \tbd[Replace with the final one-sentence verdict, including any setting where plain frame dropping matches or beats scheduling.]
+A drone SoC shares one memory path between a camera DMA engine, a high-rate IMU/telemetry master and an inference core. Large camera bursts can block small IMU packets, so the usual fixes are to drop frames, cap bursts, or schedule with ages and deadlines. We built a deterministic event-driven simulator of a flight-controller-class SoC (16-bit SDR SDRAM, 0.2~GB/s) and ask when scheduling beats simply dropping frames at equal bandwidth and energy. We state three falsifiable hypotheses, write an analytic bound before running the simulator, and log the cause of every stall. The saturation knee falls at \kneeFps{}~fps, not the \kneePredFps{}~fps the bandwidth formula predicts. At \policyFps{}~fps, the IMU \pone{} latency is \imuDropOneTwenty{}~$\mu$s when frames are dropped (fixed priority, 1~KB bursts), \imuCapOneTwenty{}~$\mu$s with burst capping and \imuAdaptOneTwenty{}~$\mu$s with adaptive splitting. Traffic is driven by frame-change intensity from \nClips{} ERA aerial clips and a synthetic IMU stream with manoeuvre bursts. Scheduling wins only on IMU latency, by a few microseconds against a 1~ms control deadline; on frame age and energy, plain frame dropping matches or beats every scheduler, and above the knee deadline-aware arbitration starves the IMU.
 \end{abstract}
 \begin{IEEEkeywords}
 DMA, bus arbitration, memory contention, burst size, drone SoC, frame dropping, DVFS
@@ -38,7 +38,7 @@ Two cheap remedies need no new hardware policy: drop frames when queues back up,
 
 \section{System and Workload Model}
 \subsection{Architecture}
-Fig.~\ref{fig:arch} shows the modelled SoC. Three masters (camera DMA, IMU/telemetry, NPU/CPU) share one bus. The NPU has private L1/L2 caches with a finite number of MSHRs, and a shared cache or scratchpad sits in front of the memory controller. The bus is non-preemptive: once a burst is granted it holds the bus for its whole duration.
+Fig.~\ref{fig:arch} shows the modelled SoC. Three masters (camera DMA, IMU/telemetry, NPU/CPU) share one bus. A shared 16~KB write-back cache with a finite number of MSHRs sits in front of the memory controller and a 16-bit SDR SDRAM with per-bank open rows. The bus is non-preemptive: once a burst is granted it holds the bus for its whole duration.
 \begin{figure}[t]\centering\input{figs/arch}\caption{Modelled drone SoC. Dashed arrows: the power model measures traffic and caps the clock $f$.}\label{fig:arch}\end{figure}
 
 \subsection{Traffic and utilisation}
@@ -47,7 +47,7 @@ Camera demand is $D_c=\phi F$ for frame rate $\phi$ and frame size $F$ bytes. IM
 \rho=\frac{D_c+D_i+D_n}{BW\,\eta(B)},\qquad \eta(B)=\frac{B}{B+B_o},
 \label{eq:rho}
 \end{equation}
-where $B_o$ is the per-burst overhead expressed in bytes of lost bus time (arbitration and row activation). The saturation knee is the frame rate at which $\rho=1$.
+where $B_o$ is the per-burst overhead expressed in bytes of lost bus time (arbitration and command phases; the simulator models row activation separately). The saturation knee is the frame rate at which $\rho=1$.
 
 \subsection{Predicted blocking latency}
 For one burst in flight and arbitration time $t_a$, the worst-case IMU wait is
@@ -73,7 +73,7 @@ where frame dropping matches a target budget by dropping a fraction $\delta$ of 
 
 \section{Scheduling Policies}
 \textbf{Baselines.} \emph{Frame dropping}: skip a frame when the input queue exceeds $Q$. \emph{Fixed burst}: camera burst $B_c$ is constant, with fixed priority ($\imu>\npu>\cam$) or round-robin.\\
-\textbf{Proposed.} \emph{Burst capping} limits every master to $B_{\mathrm{cap}}$. \emph{Adaptive splitting} splits a camera burst into pieces of size $B_s$ whenever an IMU packet is pending. \emph{Age/deadline-aware} arbitration grants the request with the smallest slack
+\textbf{Proposed.} \emph{Burst capping} limits every master to $B_{\mathrm{cap}}$. \emph{Adaptive splitting} splits a camera burst into pieces of size $B_s$ whenever an IMU packet is pending or due before the burst would finish (the IMU timer is known). \emph{Age/deadline-aware} arbitration grants the request with the smallest slack
 \begin{equation}
 s_j=d_j-(t-t_j^{\mathrm{arr}})-\frac{B_j}{BW},
 \end{equation}
@@ -81,75 +81,71 @@ where $d_j$ is the request's deadline (IMU: its control-loop period; camera: the
 
 \section{Experimental Setup}
 \subsection{Simulator}
-The simulator is deterministic and event-driven, with events \texttt{IMU\_ARRIVAL}, \texttt{CAM\_FRAME\_START}, \texttt{DMA\_BURST\_REQ}, \texttt{BUS\_GRANT}, \texttt{CACHE\_HIT/MISS}, \texttt{DRAM\_SERVICE} and \texttt{COMPUTE\_TILE\_DONE}. Each request records its stall by cause, so that
+The simulator is deterministic and event-driven (frame start, camera burst ready, IMU arrival, background arrival, NPU compute done). One non-preemptive bus grants one piece of a request at a time; behind it, every 32-byte line goes through the cache and, on a miss or write-back, to an SDRAM bank with an open row. A piece costs the larger of its bus time $(B+B_o)/BW$ and its memory time (line transfers, row activations, and read-miss latency overlapped across the MSHRs). Each request records its stall by cause,
 \begin{equation}
-T^{\mathrm{stall}}_j=T^{\mathrm{arb}}_j+T^{\mathrm{burst}}_j+T^{\mathrm{cache}}_j+T^{\mathrm{dram}}_j.
+T^{\mathrm{stall}}_j=T^{\mathrm{arb}}_j+T^{\mathrm{own}}_j+T^{\mathrm{burst}}_j+T^{\mathrm{cache}}_j+T^{\mathrm{dram}}_j,
 \end{equation}
-Table~\ref{tab:params} lists the parameters. Runs use fixed seeds and a warm-up before measuring; every table and figure is regenerated from committed CSV files.
-\begin{table}[t]\centering\caption{Default simulator parameters (assumed configuration, swept where noted).}\label{tab:params}
+where \emph{own} is time behind earlier requests of the same master. A governor evaluates Eq.~(\ref{eq:power}) every 100~$\mu$s and steps the clock down when the cap is exceeded. Before any result we checked byte conservation under every policy, a single-master run against Eq.~(\ref{eq:rho}) (0.63\% error), two- and three-master runs against Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) (the fixed-priority maximum reaches 82--100\% of the bound and never exceeds it), and bit-identical repeats per seed. Table~\ref{tab:params} lists the parameters, fixed in a committed config file before the sweeps.
+\begin{table}[t]\centering\caption{Default parameters (flight-controller-class SoC; ``assumed'' values are modelling choices).}\label{tab:params}
 \small\begin{tabular}{@{}ll@{}}\toprule
 Parameter & Value\\\midrule
-DRAM peak bandwidth $BW$ & \tbd[12.8] GB/s\\
-Camera rate $\phi$ / frame $F$ & 30--120 fps (swept) / \tbd[0.6] MB\\
-Camera burst $B_c$ & 64 B -- 2 KB (swept)\\
-IMU rate / packet $S_i$ & 200--1000 Hz / \tbd[32] B\\
-Cache (size, ways, policy) & \tbd[256 KB, 8, write-back]\\
-MSHRs & \tbd[8]\\
-$P_{\mathrm{cap}}$, $f_{\max}$ & \tbd[X] W, \tbd[X] MHz\\
-Queue limit $Q$ & \tbd[2] frames\\\bottomrule
+Memory path & 16-bit SDR SDRAM, 100~MHz, $BW=0.2$~GB/s\\
+Row hit / miss, banks, row & 30 / 90~ns, 4, 512~B\\
+Camera rate $\phi$ / frame $F$ & 15--240 fps (swept) / 614{,}400~B\\
+Camera burst $B_c$ & 64 B -- 2 KB (swept), default 1~KB\\
+IMU rate / packet $S_i$ & 1~kHz ($\times4$ in manoeuvres) / 32~B\\
+Cache (size, ways, line, policy) & 16~KB, 4, 32~B, write-back\\
+MSHRs; $B_o$; $B_{\mathrm{cap}}$; $B_s$ & 4; 16~B; 128~B; 64~B\\
+$P_{\mathrm{cap}}$, $f_{\max}$, steps & 0.30~W (assumed), 100~MHz, 50/67/100\\
+NPU & reads $0.25+0.75\,m_k$ of the frame; 4~ms compute\\
+Queue limit $Q$ & 2 frames\\\bottomrule
 \end{tabular}\end{table}
 
 \subsection{Traces}
-\emph{Synthetic stress traces} sweep frame rate, frame size, burst length and background traffic to locate the knee. \emph{Aerial traces} take per-frame change intensity from ERA/CapERA clips~\cite{mou2020era,bashmal2023capera}; the NPU's tile reads scale with that intensity, and the IMU stream is a logged or synthetic telemetry trace with bursts at manoeuvres. We report the number of clips and their motion groups: \tbd[N clips].
+\emph{Synthetic stress traces} sweep burst size and frame rate to locate the knee. \emph{Aerial traces} take per-frame change intensity $m_k$, the share of $16\times16$ blocks whose mean absolute change exceeds 8 grey levels, from \nClips{} ERA clips~\cite{mou2020era}, 40 per camera-motion group (hover, moving, untrackable) as in~\cite{baig2026fewer}, drawn with a fixed seed. The NPU's tile reads scale with $m_k$. The IMU stream is synthetic: 1~kHz with 2\% jitter and four-fold bursts during 200~ms manoeuvres.
 
 \subsection{Metrics and statistics}
-We report IMU \pone{} and maximum latency, frame-to-inference age, drop rate, DRAM utilisation, bus idle and stall cycles, cache miss rate, MSHR occupancy and energy. Intervals are 95\% bootstrap intervals over \tbd[N] seeds or clips. A policy ``wins'' only if its interval excludes the baseline's at equal budget (Eq.~\ref{eq:equal}).
+We report IMU \pone{} and maximum latency, frame age at inference, drop rate, utilisation, stall time by cause and energy per processed frame. Intervals are 95\% paired bootstrap intervals over the \nClips{} clips (10 seeds for the synthetic sweeps). Frame dropping is matched to each policy by choosing $\delta\in\{0,0.1,\dots,0.6\}$ whose DRAM rate and energy are closest, with $\epsilon_b=\epsilon_e=5\%$; a policy ``wins'' only if the interval of its difference excludes zero.
 
 \section{Results and Discussion}\label{sec:results}
 \subsection{Predicted against simulated}
-Table~\ref{tab:pred} compares Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) with the simulator. \tbd[State where the bound holds, where queueing breaks it, and by how much.]
-\begin{table}[t]\centering\caption{IMU wait at $B_c=1$~KB, 60~fps: bound against simulated.}\label{tab:pred}
-\small\begin{tabular}{@{}lrrr@{}}\toprule
-Policy & Bound ($\mu$s) & Sim.\ \pone{} & Sim.\ max\\\midrule
-Fixed priority & \tbd & \tbd & \tbd\\
-Round-robin & \tbd & \tbd & \tbd\\
-Burst-capped & \tbd & \tbd & \tbd\\\bottomrule
+\begin{table}[t]\centering\caption{IMU latency at $B_c=1$~KB, 60~fps: bound against simulated ($\mu$s). Last column: clock pinned at $f_{\max}$.}\label{tab:pred}
+\small\begin{tabular}{@{}lrrrr@{}}\toprule
+Policy & Bound & Sim.\ \pone{} & Sim.\ max & Pinned \pone{}\\\midrule
+\input{generated/tab_pred}\bottomrule
 \end{tabular}\end{table}
+Table~\ref{tab:pred} compares Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) with the simulator. The simulated tail exceeds the fixed-priority bound (\predFPPNinetyNine{} against \predFPBound{}~$\mu$s) because the power cap lowers the clock; with the clock pinned at $f_{\max}$ the \pone{} is \pinFPPNinetyNine{}~$\mu$s, at the bound. The round-robin bound is loose, because the third master rarely has a burst queued ahead of the IMU.
 
 \subsection{H1: burst blocking}
-\begin{figure}[t]\centering\input{figs/burst}\caption{IMU \pone{} latency against camera burst size at 60~fps.}\label{fig:burst}\end{figure}
-Fig.~\ref{fig:burst} sweeps $B_c$. \tbd[Fit slope against $1/BW$ of Eq.~(\ref{eq:fp}); report whether H1 holds.]
+\begin{figure}[t]\centering\input{figs/burst}\caption{IMU \pone{} latency against camera burst size at 60~fps (10 seeds).}\label{fig:burst}\end{figure}
+Fig.~\ref{fig:burst} sweeps $B_c$. Under fixed priority the \pone{} grows by \hOneFpSlope{}~ns per byte ($R^2=0.99$) against $1/BW=5$~ns per byte predicted by Eq.~(\ref{eq:fp}); under round-robin by \hOneRrSlope{}~ns per byte, below the predicted 10. Burst capping holds it flat at about 1.4~$\mu$s, and adaptive splitting stays flat up to 1~KB. H1 holds.
 
 \subsection{Saturation knee}
-\begin{figure}[t]\centering\input{figs/knee}\caption{Bus utilisation $\rho$ (Eq.~\ref{eq:rho}) against camera frame rate.}\label{fig:knee}\end{figure}
-Fig.~\ref{fig:knee} locates the knee at \tbd[X] fps. Beyond it, queues grow without bound unless frames are dropped.
+\begin{figure}[t]\centering\input{figs/knee}\caption{Utilisation and drop rate against camera frame rate ($B_c=1$~KB, 10 seeds).}\label{fig:knee}\end{figure}
+Frames start dropping (more than 1\%) at \kneeFps{}~fps (Fig.~\ref{fig:knee}), well below the \kneePredFps{}~fps at which Eq.~(\ref{eq:rho}) reaches $\rho=1$. With the clock pinned at $f_{\max}$ the knee moves to \kneePinnedFps{}~fps, so the power cap costs about 30~fps of headroom. The remaining gap to the prediction comes from costs Eq.~(\ref{eq:rho}) leaves out: row activations, the NPU's 4~ms compute per frame and its bounded number of reads in flight.
 
 \subsection{H2 and H3: equal-budget comparison}
-\begin{figure}[t]\centering\input{figs/policy}\caption{Frame age against drop rate at equal DRAM bandwidth and energy (Eq.~\ref{eq:equal}).}\label{fig:policy}\end{figure}
-\begin{table}[t]\centering\caption{Equal-budget comparison at \tbd[X] fps (mean $\pm$ 95\% CI).}\label{tab:policy}
+\begin{figure}[t]\centering\input{figs/policy}\caption{Frame age against drop rate at \policyFps{}~fps: frame dropping over $\delta$, and two schedulers.}\label{fig:policy}\end{figure}
+\begin{table*}[t]\centering\caption{Equal-budget comparison at \policyFps{}~fps, \nClips{} ERA clips: mean [95\% CI]. $\delta$: matched drop fraction. Frame dropping at $\delta=0$ is fixed priority with 1~KB bursts and queue drops. $^\dagger$: outside the 5\% budget tolerance.}\label{tab:policy}
 \small\begin{tabular}{@{}lrrrr@{}}\toprule
-Policy & IMU \pone{} ($\mu$s) & Age (ms) & Drop (\%) & $E$ (mJ)\\\midrule
-Frame dropping & \tbd & \tbd & \tbd & \tbd\\
-Fixed 1 KB, FP & \tbd & \tbd & \tbd & \tbd\\
-Burst-capped & \tbd & \tbd & \tbd & \tbd\\
-Adaptive split & \tbd & \tbd & \tbd & \tbd\\
-Age/deadline & \tbd & \tbd & \tbd & \tbd\\\bottomrule
-\end{tabular}\end{table}
-Fig.~\ref{fig:policy} and Table~\ref{tab:policy} test H2 and H3. \tbd[Say which policies win, which tie, and where dropping wins.]
+Policy & IMU \pone{} ($\mu$s) & Age (ms) & Drop (\%) & $E$ (mJ/frame)\\\midrule
+\input{generated/tab_policy}\bottomrule
+\end{tabular}\end{table*}
+Below and at the knee the matched budget is $\delta=0$ for capping, adaptive splitting and deadline-aware arbitration, so frame dropping is the fixed-priority baseline. Against it, adaptive splitting lowers the IMU \pone{} by \dImuAdaptOneTwentyAbs{}~$\mu$s at \policyFps{}~fps with no change in frame age, drop rate or energy, so H2 holds statistically. The gain is under 1\% of the 1~ms control period. Capping lowers the \pone{} slightly more but adds \dAgeCapOneTwenty{}~ms of frame age; round-robin and deadline-aware arbitration add \dAgeRROneTwenty{} and \dAgeEdfOneTwenty{}~ms. Above the knee, at 180~fps, frame dropping ties adaptive splitting and beats every other scheduler on frame age, so H3 holds; deadline-aware arbitration raises the IMU \pone{} by \dImuEdfOneEighty{}~$\mu$s, past the deadline, because late camera and NPU requests acquire smaller slack than the IMU.
 
 \subsection{Where the stalls go}
-\begin{figure}[t]\centering\input{figs/stall}\caption{Stall-cycle share by cause for each policy.}\label{fig:stall}\end{figure}
-Fig.~\ref{fig:stall} separates blocking from saturation. A policy that shortens blocking but leaves DRAM saturation unchanged only moves the stall. \tbd[Interpret.]
+\begin{figure}[t]\centering\input{figs/stall}\caption{Share of stall time by cause at \policyFps{}~fps.}\label{fig:stall}\end{figure}
+Arbitration and each master's own queue account for at least 93\% of stall time under every policy (Fig.~\ref{fig:stall}). Burst blocking, which every scheduler targets, is at most 3\%, as are cache and DRAM effects. Shortening blocking therefore moves little of the total stall, which is why the schedulers change the IMU tail and not frame age.
 
 \subsection{Energy and clocks}
-\begin{figure}[t]\centering\input{figs/energy}\caption{Energy per processed frame at equal bandwidth.}\label{fig:energy}\end{figure}
-Fig.~\ref{fig:energy} tests whether smarter scheduling saves energy or only shifts work, and whether the power cap in Eq.~(\ref{eq:power}) changes the sustained clock. \tbd[Interpret.]
+\begin{figure}[t]\centering\input{figs/energy}\caption{Energy per processed frame at \policyFps{}~fps.}\label{fig:energy}\end{figure}
+No scheduler saves energy (Fig.~\ref{fig:energy}). Adaptive splitting costs the same as dropping; capping and round-robin cost 3--10\% more per frame because smaller pieces and extra grants keep the bus busy longer, and the power cap then lowers the sustained clock (81.7 against 84.5~MHz for capping).
 
 \section{Limitations}
-Results come from a simulator, not silicon. DRAM timing is simplified to \tbd[model], and the power model uses assumed coefficients. The bound in Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) ignores queueing. Aerial traces set traffic intensity only; they do not exercise a real image pipeline. \tbd[Add any further threats found while running.]
+Results come from a simulator, not silicon. DRAM timing is a per-bank open-row model with fixed CAS and activation costs and no refresh, and the power model uses assumed coefficients. The bound in Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) ignores queueing. Aerial traces set the NPU's read volume only; they do not exercise a real image pipeline, and the IMU stream is synthetic. Frame age is our only quality proxy; we did not measure motion-event recall. Round-robin at 180~fps could not be matched within the 5\% bandwidth tolerance.
 
 \section{Conclusion}
-\tbd[Two or three sentences: the knee, whether H1--H3 held, and the setting in which plain frame dropping matched or beat scheduling.]
+On a flight-controller-class memory path, the knee comes at \kneeFps{}~fps, about 30~fps lower than with a pinned clock and far below the bandwidth prediction. H1--H3 held: blocking grows linearly with burst size, adaptive splitting lowers the IMU tail at equal budget, and above the knee frame dropping is at least as fresh as any scheduler. But the schedulers' gain is a few microseconds against a millisecond deadline, and none improves frame age or energy, so plain frame dropping with fixed priority is the better default.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
