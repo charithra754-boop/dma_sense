@@ -1,5 +1,5 @@
 \begin{tikzpicture}\begin{axis}[dmaplot,xmode=log,log basis x=2,xlabel={Camera DMA burst $B_{c}$ (bytes)},
- ylabel={IMU \pone{} latency ($\mu$s)},xtick={64,128,256,512,1024,2048},xticklabels={64,128,256,512,1K,2K}]
+ ylabel={IMU \pone{} latency ($\mu$s)},legend style={at={(0.02,0.98)},anchor=north west,fill=white,fill opacity=0.85,text opacity=1},ymax=18,xtick={64,128,256,512,1024,2048},xticklabels={64,128,256,512,1K,2K}]
 \addplot table[col sep=comma,x=burst,y=fp]{data/burst.csv};\addlegendentry{Fixed prio.}
 \addplot table[col sep=comma,x=burst,y=rr]{data/burst.csv};\addlegendentry{Round-robin}
 \addplot table[col sep=comma,x=burst,y=cap]{data/burst.csv};\addlegendentry{Burst-capped}

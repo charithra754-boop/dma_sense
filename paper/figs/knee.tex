@@ -1,5 +1,5 @@
 \begin{tikzpicture}\begin{axis}[dmaplot,xlabel={Camera frame rate (fps)},ylabel={Utilisation $\rho$ / drop rate},
- ymin=0,ymax=1.05,legend style={at={(0.02,0.98)},anchor=north west}]
+ ymin=0,ymax=1.05,legend style={at={(0.5,-0.25)},anchor=north,legend columns=2}]
 \addplot[blue,mark=*] table[col sep=comma,x=fps,y=rho]{data/knee.csv};\addlegendentry{$\rho$, power-capped}
 \addplot[blue,dashed,mark=o] table[col sep=comma,x=fps,y=rho_pinned]{data/knee.csv};\addlegendentry{$\rho$, clock pinned}
 \addplot[red,mark=square*] table[col sep=comma,x=fps,y=drop]{data/knee.csv};\addlegendentry{drop rate, power-capped}

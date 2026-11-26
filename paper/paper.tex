@@ -90,7 +90,7 @@ T^{\mathrm{stall}}_j=T^{\mathrm{arb}}_j+T^{\mathrm{own}}_j+T^{\mathrm{burst}}_j+
 \end{equation}
 where \textit{own} is time behind earlier requests of the same master. A governor evaluates Eq.~(\ref{eq:power}) every 100~$\mu$s and steps the clock down when the cap is exceeded. Before any result we checked byte conservation under every policy, a single-master run against Eq.~(\ref{eq:rho}) (0.63\% error), two- and three-master runs against Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) (the fixed-priority maximum reaches 82--100\% of the bound and never exceeds it), and bit-identical repeats per seed. Table~\ref{tab:params} lists the parameters, fixed in a committed config file before the sweeps.
 \begin{table}[t]\centering\caption{Default parameters (flight-controller-class SoC; ``assumed'' values are modelling choices).}\label{tab:params}
-\small\begin{tabular}{@{}ll@{}}\toprule
+\footnotesize\begin{tabular}{@{}p{0.36\columnwidth}p{0.58\columnwidth}@{}}\toprule
 Parameter & Value\\\midrule
 Memory path & 16-bit SDR SDRAM, 100~MHz, $BW=0.2$~GB/s\\
 Row hit / miss, banks, row & 30 / 90~ns, 4, 512~B\\
