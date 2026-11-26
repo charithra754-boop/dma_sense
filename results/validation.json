@@ -1,0 +1,333 @@
+{
+ "V1_conservation": [
+  {
+   "policy": "drop",
+   "req": {
+    "imu": 14368,
+    "npu": 7372800,
+    "cam": 7372800,
+    "bg": 90411008
+   },
+   "srv": {
+    "imu": 14368,
+    "npu": 7372800,
+    "cam": 7372800,
+    "bg": 90411008
+   },
+   "pass": true
+  },
+  {
+   "policy": "fp",
+   "req": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "srv": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "pass": true
+  },
+  {
+   "policy": "rr",
+   "req": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "srv": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "pass": true
+  },
+  {
+   "policy": "cap",
+   "req": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "srv": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "pass": true
+  },
+  {
+   "policy": "adapt",
+   "req": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "srv": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "pass": true
+  },
+  {
+   "policy": "edf",
+   "req": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "srv": {
+    "imu": 14368,
+    "npu": 9830400,
+    "cam": 9830400,
+    "bg": 90411008
+   },
+   "pass": true
+  }
+ ],
+ "V2_single_master": [
+  {
+   "burst": 64,
+   "busy_ns": 1536000.0,
+   "busy_pred_ns": 1536000.0,
+   "err_busy_pct": 0.0,
+   "util": 0.005796226196368824,
+   "rho_pred": 0.00576,
+   "err_rho_pct": 0.6289270202920733,
+   "pass": true
+  },
+  {
+   "burst": 128,
+   "busy_ns": 1152000.0,
+   "busy_pred_ns": 1152000.0,
+   "err_busy_pct": 0.0,
+   "util": 0.004347169565254554,
+   "rho_pred": 0.00432,
+   "err_rho_pct": 0.6289251216331883,
+   "pass": true
+  },
+  {
+   "burst": 256,
+   "busy_ns": 960000.0,
+   "busy_pred_ns": 960000.0,
+   "err_busy_pct": 0.0,
+   "util": 0.0036226411676753625,
+   "rho_pred": 0.0036,
+   "err_rho_pct": 0.6289213243156289,
+   "pass": true
+  },
+  {
+   "burst": 512,
+   "busy_ns": 864000.0,
+   "busy_pred_ns": 864000.0,
+   "err_busy_pct": 0.0,
+   "util": 0.0032603768048416752,
+   "rho_pred": 0.00324,
+   "err_rho_pct": 0.6289137296813399,
+   "pass": true
+  },
+  {
+   "burst": 1024,
+   "busy_ns": 816000.0,
+   "busy_pred_ns": 816000.0,
+   "err_busy_pct": 0.0,
+   "util": 0.003079244295336736,
+   "rho_pred": 0.0030600000000000002,
+   "err_rho_pct": 0.6288985404162035,
+   "pass": true
+  },
+  {
+   "burst": 2048,
+   "busy_ns": 792000.0,
+   "busy_pred_ns": 792000.0,
+   "err_busy_pct": 0.0,
+   "util": 0.0029886773844084217,
+   "rho_pred": 0.00297,
+   "err_rho_pct": 0.6288681618997203,
+   "pass": true
+  }
+ ],
+ "V3_blocking_bounds": [
+  {
+   "policy": "fp",
+   "burst": 64,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 10.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "cap",
+   "burst": 64,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 10.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "rr",
+   "burst": 64,
+   "N": 3,
+   "max_wait_ns": 7.446518702432513,
+   "bound_ns": 20.0,
+   "tightness": 0.37232593512162565,
+   "pass": true
+  },
+  {
+   "policy": "fp",
+   "burst": 128,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 15.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "cap",
+   "burst": 128,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 15.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "rr",
+   "burst": 128,
+   "N": 3,
+   "max_wait_ns": 7.446518702432513,
+   "bound_ns": 30.0,
+   "tightness": 0.24821729008108379,
+   "pass": true
+  },
+  {
+   "policy": "fp",
+   "burst": 256,
+   "N": 2,
+   "max_wait_ns": 5.221866115927696,
+   "bound_ns": 25.0,
+   "tightness": 0.20887464463710784,
+   "pass": true
+  },
+  {
+   "policy": "cap",
+   "burst": 256,
+   "N": 2,
+   "max_wait_ns": 5.221866115927696,
+   "bound_ns": 25.0,
+   "tightness": 0.20887464463710784,
+   "pass": true
+  },
+  {
+   "policy": "rr",
+   "burst": 256,
+   "N": 3,
+   "max_wait_ns": 12.446518702432513,
+   "bound_ns": 50.0,
+   "tightness": 0.24893037404865026,
+   "pass": true
+  },
+  {
+   "policy": "fp",
+   "burst": 512,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 45.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "cap",
+   "burst": 512,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 25.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "rr",
+   "burst": 512,
+   "N": 3,
+   "max_wait_ns": 7.446518702432513,
+   "bound_ns": 90.0,
+   "tightness": 0.08273909669369459,
+   "pass": true
+  },
+  {
+   "policy": "fp",
+   "burst": 1024,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 85.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "cap",
+   "burst": 1024,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 25.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "rr",
+   "burst": 1024,
+   "N": 3,
+   "max_wait_ns": 42.44651870243251,
+   "bound_ns": 170.0,
+   "tightness": 0.24968540413195597,
+   "pass": true
+  },
+  {
+   "policy": "fp",
+   "burst": 2048,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 165.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "cap",
+   "burst": 2048,
+   "N": 2,
+   "max_wait_ns": 0.0,
+   "bound_ns": 25.0,
+   "tightness": 0.0,
+   "pass": true
+  },
+  {
+   "policy": "rr",
+   "burst": 2048,
+   "N": 3,
+   "max_wait_ns": 67.44651870243251,
+   "bound_ns": 330.0,
+   "tightness": 0.20438339000737124,
+   "pass": true
+  }
+ ],
+ "V4_determinism": {
+  "seed7_a": "b05ab207bd2be27cdd07e33ceda2bfe154e1ade5dce087e56ceeb01ff8daee3b",
+  "seed7_b": "b05ab207bd2be27cdd07e33ceda2bfe154e1ade5dce087e56ceeb01ff8daee3b",
+  "seed8": "b75de8e87f7b3ee030a70b51481441570da7d6491b4fec700b63a5f572a9f7c7",
+  "pass": true
+ },
+ "all_pass": true
+}
