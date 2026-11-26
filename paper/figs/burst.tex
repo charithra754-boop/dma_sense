@@ -1,0 +1,7 @@
+\begin{tikzpicture}\begin{axis}[dmaplot,xmode=log,log basis x=2,xlabel={Camera DMA burst $B_{c}$ (bytes)},
+ ylabel={IMU \pone{} latency ($\mu$s)},xtick={64,128,256,512,1024,2048},xticklabels={64,128,256,512,1K,2K}]
+\addplot table[col sep=comma,x=burst,y=fp]{data/burst.csv};\addlegendentry{Fixed prio.}
+\addplot table[col sep=comma,x=burst,y=rr]{data/burst.csv};\addlegendentry{Round-robin}
+\addplot table[col sep=comma,x=burst,y=cap]{data/burst.csv};\addlegendentry{Burst-capped}
+\addplot table[col sep=comma,x=burst,y=adapt]{data/burst.csv};\addlegendentry{Adaptive split}
+\end{axis}\end{tikzpicture}\illusnote

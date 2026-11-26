@@ -1,0 +1,5 @@
+policy,arb,burst,cache,dram
+FP,20,40,15,25
+RR,35,25,15,25
+Capped,30,10,20,40
+Adaptive,25,10,20,45

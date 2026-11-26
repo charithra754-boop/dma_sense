@@ -1,0 +1,5 @@
+\begin{tikzpicture}\begin{axis}[dmaplot,xlabel={Camera frame rate (fps)},ylabel={Bus utilisation $\rho$},
+ ymin=0,ymax=1.05,legend style={at={(0.02,0.4)},anchor=north west}]
+\addplot table[col sep=comma,x=fps,y=rho]{data/knee.csv};\addlegendentry{$\rho$ (measured)}
+\addplot[dashed,no marks,red] coordinates{(15,1)(120,1)};\addlegendentry{$\rho=1$}
+\end{axis}\end{tikzpicture}\illusnote

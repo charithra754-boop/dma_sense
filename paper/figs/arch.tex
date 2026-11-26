@@ -1,0 +1,15 @@
+\begin{tikzpicture}[font=\scriptsize,node distance=5mm,
+ blk/.style={draw,rounded corners=2pt,minimum height=7mm,minimum width=17mm,align=center,fill=blue!6},
+ mem/.style={draw,minimum height=7mm,minimum width=17mm,align=center,fill=gray!15},
+ ar/.style={-{Stealth[length=2mm]},thick}]
+ \node[blk] (cam) {Camera\\DMA};
+ \node[blk,right=of cam] (imu) {IMU /\\telemetry};
+ \node[blk,right=of imu] (npu) {NPU / CPU\\L1/L2, MSHR};
+ \node[blk,fill=orange!15,below=7mm of imu,minimum width=48mm] (bus) {Shared bus / crossbar (FP / RR / capped)};
+ \node[mem,below=7mm of bus,xshift=-13mm] (llc) {Shared cache /\\scratchpad};
+ \node[mem,right=of llc] (dram) {Memory ctrl\\+ DRAM};
+ \node[blk,fill=green!10,right=6mm of dram,minimum width=17mm] (pw) {Power /\\DVFS model};
+ \draw[ar] (cam)--(bus); \draw[ar] (imu)--(bus); \draw[ar] (npu)--(bus);
+ \draw[ar] (bus)--(llc); \draw[ar] (llc)--(dram); \draw[ar,dashed] (dram)--(pw);
+ \draw[ar,dashed] (pw.north) |- node[pos=0.25,right]{$f$ cap} (bus.east);
+\end{tikzpicture}

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+paper/build/
+*.aux
+*.log
+*.out
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.bbl
+*.blg
+# dataset media is never committed (ERA terms)
+*.mp4
+*.avi
+data_raw/

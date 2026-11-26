@@ -1,0 +1,16 @@
+% ---- shared preamble material (included by paper.tex and report.tex) ----
+\usepackage{amsmath,amssymb,booktabs,siunitx,xcolor,multirow,graphicx}
+\usepackage{pgfplots,pgfplotstable}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,calc}
+\pgfplotsset{compat=1.16}
+\newif\ifillustrative \illustrativetrue   % set \illustrativefalse once data/*.csv come from the simulator
+\newcommand{\tbd}[1][X]{\textcolor{red}{[#1]}}
+\newcommand{\illusnote}{\ifillustrative\\[-2pt]\textcolor{red}{\scriptsize ILLUSTRATIVE SHAPE, NOT RESULTS: replace data/*.csv}\fi}
+\newcommand{\imu}{\textsc{imu}}
+\newcommand{\cam}{\textsc{cam}}
+\newcommand{\npu}{\textsc{npu}}
+\newcommand{\pone}{\ensuremath{p_{99}}}
+\pgfplotsset{dmaplot/.style={width=\linewidth,height=0.72\linewidth,grid=major,
+  grid style={gray!25},tick label style={font=\scriptsize},label style={font=\footnotesize},
+  legend style={font=\tiny,at={(0.02,0.98)},anchor=north west},every axis plot/.append style={thick,mark size=1.6pt}}}
