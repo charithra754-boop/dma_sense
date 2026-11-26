@@ -1,0 +1,55 @@
+# DMA-Sense simulator parameters. Source of every [X] in the paper/report parameter tables.
+# status: data      = derived from the traces in this repo
+#         datasheet = standard part figure (cite in refs.bib before submission)
+#         assumed   = modelling choice; must be named as such in the paper
+# Freeze this file (commit) BEFORE the burst / frame-rate / equal-budget sweeps run.
+
+[dram]
+peak_bw_GBps   = 12.8   # datasheet: LPDDR4X-3200, x32 channel (3200 MT/s * 4 B)
+row_hit_ns     = 18.0   # datasheet-ish: CL ~ 18 ns at LPDDR4X-3200
+row_miss_ns    = 54.0   # tRP + tRCD + CL ~ 18 + 18 + 18 ns
+row_bytes      = 2048   # datasheet: LPDDR4 page size per x16 die pair, assumed 2 KB
+efficiency_eta = 0.80   # assumed: sustained/peak; check against single-master validation run
+
+[camera]
+width          = 640    # data: every ERA clip is 640x640
+height         = 640
+bytes_per_px   = 1.5    # assumed: NV12 / YUV420 output from the ISP
+frame_bytes    = 614400 # data: 640*640*1.5 (= the 0.6 MB placeholder)
+native_fps     = 24     # data: every ERA clip is 24 fps
+fps_sweep      = [15, 24, 30, 45, 60, 90, 120]
+burst_sweep_B  = [64, 128, 256, 512, 1024, 2048]
+
+[imu]
+rate_hz        = 1000   # assumed default; ablation 200-1000
+rate_sweep_hz  = [200, 500, 1000]
+packet_bytes   = 32     # assumed: 6-axis int16 + timestamp + header, padded to one 32 B beat group
+deadline_us    = 1000   # assumed: one IMU period
+
+[npu]
+input_bytes_per_frame = 614400 # assumed: reads the frame once (no resize in DRAM)
+weight_bytes_per_frame = 0     # assumed: weights cache-resident; ablation knob
+
+[cache]
+size_KB        = 256    # assumed default; ablation 64-1024
+ways           = 8
+line_B         = 64
+write_policy   = "wb"   # "wb" | "wt"
+mshrs          = 8      # ablation 2, 4, 8, 16
+
+[queue]
+limit_frames   = 2      # ablation 1-4
+
+[power]
+static_W       = 0.30   # assumed
+alpha_C_V2_nJ_per_cycle = 0.25  # assumed dynamic energy per active bus/controller cycle
+e_bit_pJ       = 4.0    # assumed: LPDDR4X ~ 4 pJ/bit access energy (literature range 3-6)
+cap_W          = 2.0    # assumed SoC memory-subsystem power cap
+f_max_MHz      = 1600   # matches LPDDR4X-3200 I/O clock
+dvfs_steps_MHz = [800, 1066, 1333, 1600]
+
+[validation]
+single_master_tol_pct = 2.0   # single-master run vs D / (BW * eta)
+blocking_bound_tol_pct = 5.0  # two-master run vs W^FP / W^RR / W^cap
+seeds          = 20
+bootstrap_reps = 10000
