@@ -5,7 +5,7 @@ change-map convention); mad_k = whole-frame mean absolute difference (0-255).
 Sample: PER_GROUP clips per motion group (hover / moving / unreliable), random.Random(SEED),
 both splits, from traces/era_clips.csv. Only the sampled mp4s are extracted from the zip.
 
-Usage: python -I traces/era_mk.py ~/airgap/data/era/ERA_Dataset.zip traces/era_mk.csv
+Usage: python -P traces/era_mk.py ~/airgap/data/era/ERA_Dataset.zip traces/era_mk.csv
 """
 import csv
 import random

@@ -109,7 +109,7 @@ class Sim:
         self.on = set(self.sim.get("masters", ["cam", "imu", "npu", "bg"]))   # no cache, no row/latency effects
         self.bw = d["peak_bw_GBps"]
         self.B_o = self.sim.get("burst_overhead_B", 64)
-        self.t_line = 64 / self.bw
+        self.t_line = cfg["cache"]["line_B"] / self.bw
         self.t_act = d["row_miss_ns"] - d["row_hit_ns"]
         self.t_cas = d["row_hit_ns"]
         self.row_bytes, self.banks = d["row_bytes"], d.get("banks", 8)
@@ -250,7 +250,7 @@ class Sim:
                 self.imu_i += 1
                 self.next_imu = self.imu_trace[self.imu_i] if self.imu_i < len(self.imu_trace) else None
         elif kind == "bg":
-            addr = BG_BASE + self.rng.randrange(0, 64 << 20) // 64 * 64
+            addr = BG_BASE + self.rng.randrange(0, 64 << 20) // 32 * 32
             self.enqueue(Req("bg", self.bg_B, t, math.inf, self.rng.random() < 0.5, addr))
             self.push(t + self.rng.expovariate(self.bg_rate / self.bg_B), "bg")
         elif kind == "npu_done":
@@ -301,7 +301,7 @@ class Sim:
         fr = self.frames[k]
         self.npu_busy, self.npu_frame = True, k
         gamma = self.npu_gamma_min + (1 - self.npu_gamma_min) * fr["mk"]
-        nin = int(self.F * gamma) // 64 * 64
+        nin = int(self.F * gamma) // 32 * 32
         reqs = []
         for off in range(0, self.npu_w, self.npu_burst):
             reqs.append((NPU_W_BASE + off, min(self.npu_burst, self.npu_w - off)))
