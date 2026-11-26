@@ -65,12 +65,12 @@ Time advances by discrete events: frame start, camera burst ready, IMU arrival, 
 \State push the first frame-start and IMU events
 \While{events remain or requests are queued}
   \State deliver every event due by $t$; each new request records $t^{\mathrm{arr}}$
-  \State if it arrived while a piece held the bus, charge the residual to \emph{burst blocking}
+  \State if it arrived while a piece held the bus, charge the residual to \textit{burst blocking}
   \If{no request is queued} \State $t \gets$ next event time; \textbf{continue} \EndIf
   \State $j \gets \textsc{Arbitrate}(\text{policy})$; $b \gets$ piece size of $j$ (cap or split)
-  \State charge the wait since $j$'s last piece to \emph{own queue} (same master) or \emph{arbitration}
+  \State charge the wait since $j$'s last piece to \textit{own queue} (same master) or \textit{arbitration}
   \State service $\gets \max(\text{bus time}, \text{memory time})$ over $j$'s cache lines
-  \State charge the excess over bus time to \emph{cache/MSHR} or \emph{DRAM}
+  \State charge the excess over bus time to \textit{cache/MSHR} or \textit{DRAM}
   \State $t \gets t+\text{service}$; update the power window, possibly step $f$
 \EndWhile
 \end{algorithmic}\end{algorithm}
@@ -100,7 +100,7 @@ Before reporting results: (i) conservation checks (bytes in equal bytes served),
 \subsection{Predicted against simulated}
 \begin{table}[h]\centering\caption{Bound vs.\ simulated IMU latency at $B_c=1$~KB, 60 fps ($\mu$s).}
 \begin{tabular}{@{}lrrrr@{}}\toprule Policy & Bound & Sim.\ \pone{} & Sim.\ max & Pinned \pone{}\\\midrule
-\input{generated/tab_pred}\bottomrule\end{tabular}\end{table}
+\csname @@input\endcsname generated/tab_pred.tex \bottomrule\end{tabular}\end{table}
 The power cap lowers the clock, so the simulated fixed-priority tail (\predFPPNinetyNine{}~$\mu$s) exceeds the bound (\predFPBound{}~$\mu$s); with the clock pinned it is \pinFPPNinetyNine{}~$\mu$s, at the bound. The round-robin bound assumes every other master has a burst waiting, which rarely happens.
 \subsection{H1: burst blocking}
 \begin{figure}[h]\centering\input{figs/burst}\caption{IMU \pone{} latency against camera burst size (60 fps, 10 seeds).}\end{figure}
@@ -112,10 +112,10 @@ Frames start dropping at \kneeFps{}~fps (predicted \kneePredFps{}~fps from bandw
 \begin{figure}[h]\centering\input{figs/policy}\caption{Frame age against drop rate at \policyFps{}~fps.}\end{figure}
 \begin{table}[h]\centering\caption{Equal-budget comparison at \policyFps{}~fps (mean [95\% CI], \nClips{} clips).}
 \resizebox{\linewidth}{!}{\begin{tabular}{@{}lrrrr@{}}\toprule Policy & IMU \pone{} ($\mu$s) & Age (ms) & Drop (\%) & $E$ (mJ)\\\midrule
-\input{generated/tab_policy}\bottomrule\end{tabular}}\end{table}
+\csname @@input\endcsname generated/tab_policy.tex \bottomrule\end{tabular}}\end{table}
 \begin{table}[h]\centering\caption{Policy minus matched frame dropping, all frame rates (paired bootstrap, 95\% CI). $^\dagger$: budget match outside 5\%.}
 \resizebox{\linewidth}{!}{\begin{tabular}{@{}rlrrrr@{}}\toprule fps & Policy & $\delta$ & match err.\ BW / $E$ (\%) & $\Delta$ IMU \pone{} ($\mu$s) & $\Delta$ age (ms)\\\midrule
-\input{generated/tab_diff}\bottomrule\end{tabular}}\end{table}
+\csname @@input\endcsname generated/tab_diff.tex \bottomrule\end{tabular}}\end{table}
 H2 holds statistically: adaptive splitting lowers the IMU \pone{} by \dImuAdaptOneTwentyAbs{}~$\mu$s at \policyFps{}~fps with no change in frame age. H3 holds: above the knee, dropping ties adaptive splitting and beats the other schedulers on frame age, and deadline-aware arbitration raises the IMU \pone{} by \dImuEdfOneEighty{}~$\mu$s.
 \subsection{Stall breakdown}
 \begin{figure}[h]\centering\input{figs/stall}\caption{Share of stall time by cause at \policyFps{}~fps.}\end{figure}
@@ -126,7 +126,7 @@ No scheduler lowers energy per frame; round-robin costs about 10\% more than dro
 \subsection{Ablations}
 \begin{table}[h]\centering\caption{Ablations at 120 fps, $B_c=1$~KB, synthetic traffic, 5 seeds; one factor changed at a time. IMU \pone{} ($\mu$s) and mean frame age (ms) for fixed priority (FP), capped, adaptive (Ad.) and deadline-aware (DL).}
 \resizebox{\linewidth}{!}{\begin{tabular}{@{}lrrrrrrrr@{}}\toprule Setting & \multicolumn{4}{c}{IMU \pone{}} & \multicolumn{4}{c}{Age}\\ & FP & Cap & Ad. & DL & FP & Cap & Ad. & DL\\\midrule
-\input{generated/tab_ablation}\bottomrule\end{tabular}}\end{table}
+\csname @@input\endcsname generated/tab_ablation.tex \bottomrule\end{tabular}}\end{table}
 The queue limit $Q$ is the only factor that moves frame age by much: at $Q=1$ every policy drops a third of the frames and mean age falls to about 10~ms; at $Q=4$ fixed priority drops nothing but frames wait 94~ms. It is also the only factor that changes the ranking: at $Q=4$ deadline-aware arbitration gives the freshest frames (35~ms) because it drops 12.5\% of them, at the cost of an IMU \pone{} of 18.7~ms. Elsewhere the ranking is stable: on IMU \pone{}, capping $<$ adaptive $<$ fixed priority $<$ deadline-aware; on age, fixed priority $=$ adaptive $<$ capping $<$ deadline-aware. Deadline-aware arbitration's IMU tail depends on how far the system is overloaded: it ranges from 8~$\mu$s (4~KB cache, write-through, $Q=1$) to over a millisecond (two MSHRs, 64~KB cache). MSHR count, cache size, background traffic up to 10\% of the bus, IMU rate and the split size $B_s$ (32--256~B) move fixed priority and adaptive splitting by less than 1~$\mu$s and 1.5~ms. In short, the queue policy, which is frame dropping, decides freshness; the arbiter decides only the IMU tail.
 
 \section{Limitations and Threats to Validity}

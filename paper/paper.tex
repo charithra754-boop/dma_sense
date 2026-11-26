@@ -1,4 +1,7 @@
 \documentclass[conference]{IEEEtran}
+% Draft typography: LaTeX's Computer Modern (lmodern) instead of IEEEtran's Times. For camera-ready, delete the next two lines.
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \input{common}
 \begin{document}
 \title{Smarter Buses or Fewer Frames? Burst Sizing, Arbitration and Frame Dropping on a Drone SoC}
@@ -72,8 +75,8 @@ with static power $P_s$, activity $\alpha$, switched capacitance $C$, DRAM energ
 where frame dropping matches a target budget by dropping a fraction $\delta$ of frames, so $D_c\rightarrow(1-\delta)D_c$.
 
 \section{Scheduling Policies}
-\textbf{Baselines.} \emph{Frame dropping}: skip a frame when the input queue exceeds $Q$. \emph{Fixed burst}: camera burst $B_c$ is constant, with fixed priority ($\imu>\npu>\cam$) or round-robin.\\
-\textbf{Proposed.} \emph{Burst capping} limits every master to $B_{\mathrm{cap}}$. \emph{Adaptive splitting} splits a camera burst into pieces of size $B_s$ whenever an IMU packet is pending or due before the burst would finish (the IMU timer is known). \emph{Age/deadline-aware} arbitration grants the request with the smallest slack
+\textbf{Baselines.} \textit{Frame dropping}: skip a frame when the input queue exceeds $Q$. \textit{Fixed burst}: camera burst $B_c$ is constant, with fixed priority ($\imu>\npu>\cam$) or round-robin.\\
+\textbf{Proposed.} \textit{Burst capping} limits every master to $B_{\mathrm{cap}}$. \textit{Adaptive splitting} splits a camera burst into pieces of size $B_s$ whenever an IMU packet is pending or due before the burst would finish (the IMU timer is known). \textit{Age/deadline-aware} arbitration grants the request with the smallest slack
 \begin{equation}
 s_j=d_j-(t-t_j^{\mathrm{arr}})-\frac{B_j}{BW},
 \end{equation}
@@ -85,7 +88,7 @@ The simulator is deterministic and event-driven (frame start, camera burst ready
 \begin{equation}
 T^{\mathrm{stall}}_j=T^{\mathrm{arb}}_j+T^{\mathrm{own}}_j+T^{\mathrm{burst}}_j+T^{\mathrm{cache}}_j+T^{\mathrm{dram}}_j,
 \end{equation}
-where \emph{own} is time behind earlier requests of the same master. A governor evaluates Eq.~(\ref{eq:power}) every 100~$\mu$s and steps the clock down when the cap is exceeded. Before any result we checked byte conservation under every policy, a single-master run against Eq.~(\ref{eq:rho}) (0.63\% error), two- and three-master runs against Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) (the fixed-priority maximum reaches 82--100\% of the bound and never exceeds it), and bit-identical repeats per seed. Table~\ref{tab:params} lists the parameters, fixed in a committed config file before the sweeps.
+where \textit{own} is time behind earlier requests of the same master. A governor evaluates Eq.~(\ref{eq:power}) every 100~$\mu$s and steps the clock down when the cap is exceeded. Before any result we checked byte conservation under every policy, a single-master run against Eq.~(\ref{eq:rho}) (0.63\% error), two- and three-master runs against Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) (the fixed-priority maximum reaches 82--100\% of the bound and never exceeds it), and bit-identical repeats per seed. Table~\ref{tab:params} lists the parameters, fixed in a committed config file before the sweeps.
 \begin{table}[t]\centering\caption{Default parameters (flight-controller-class SoC; ``assumed'' values are modelling choices).}\label{tab:params}
 \small\begin{tabular}{@{}ll@{}}\toprule
 Parameter & Value\\\midrule
@@ -102,7 +105,7 @@ Queue limit $Q$ & 2 frames\\\bottomrule
 \end{tabular}\end{table}
 
 \subsection{Traces}
-\emph{Synthetic stress traces} sweep burst size and frame rate to locate the knee. \emph{Aerial traces} take per-frame change intensity $m_k$, the share of $16\times16$ blocks whose mean absolute change exceeds 8 grey levels, from \nClips{} ERA clips~\cite{mou2020era}, 40 per camera-motion group (hover, moving, untrackable) as in~\cite{baig2026fewer}, drawn with a fixed seed. The NPU's tile reads scale with $m_k$. The IMU stream is synthetic: 1~kHz with 2\% jitter and four-fold bursts during 200~ms manoeuvres.
+\textit{Synthetic stress traces} sweep burst size and frame rate to locate the knee. \textit{Aerial traces} take per-frame change intensity $m_k$, the share of $16\times16$ blocks whose mean absolute change exceeds 8 grey levels, from \nClips{} ERA clips~\cite{mou2020era}, 40 per camera-motion group (hover, moving, untrackable) as in~\cite{baig2026fewer}, drawn with a fixed seed. The NPU's tile reads scale with $m_k$. The IMU stream is synthetic: 1~kHz with 2\% jitter and four-fold bursts during 200~ms manoeuvres.
 
 \subsection{Metrics and statistics}
 We report IMU \pone{} and maximum latency, frame age at inference, drop rate, utilisation, stall time by cause and energy per processed frame. Intervals are 95\% paired bootstrap intervals over the \nClips{} clips (10 seeds for the synthetic sweeps). Frame dropping is matched to each policy by choosing $\delta\in\{0,0.1,\dots,0.6\}$ whose DRAM rate and energy are closest, with $\epsilon_b=\epsilon_e=5\%$; a policy ``wins'' only if the interval of its difference excludes zero.
@@ -112,7 +115,7 @@ We report IMU \pone{} and maximum latency, frame age at inference, drop rate, ut
 \begin{table}[t]\centering\caption{IMU latency at $B_c=1$~KB, 60~fps: bound against simulated ($\mu$s). Last column: clock pinned at $f_{\max}$.}\label{tab:pred}
 \small\begin{tabular}{@{}lrrrr@{}}\toprule
 Policy & Bound & Sim.\ \pone{} & Sim.\ max & Pinned \pone{}\\\midrule
-\input{generated/tab_pred}\bottomrule
+\csname @@input\endcsname generated/tab_pred.tex \bottomrule
 \end{tabular}\end{table}
 Table~\ref{tab:pred} compares Eqs.~(\ref{eq:fp})--(\ref{eq:cap}) with the simulator. The simulated tail exceeds the fixed-priority bound (\predFPPNinetyNine{} against \predFPBound{}~$\mu$s) because the power cap lowers the clock; with the clock pinned at $f_{\max}$ the \pone{} is \pinFPPNinetyNine{}~$\mu$s, at the bound. The round-robin bound is loose, because the third master rarely has a burst queued ahead of the IMU.
 
@@ -129,7 +132,7 @@ Frames start dropping (more than 1\%) at \kneeFps{}~fps (Fig.~\ref{fig:knee}), w
 \begin{table*}[t]\centering\caption{Equal-budget comparison at \policyFps{}~fps, \nClips{} ERA clips: mean [95\% CI]. $\delta$: matched drop fraction. Frame dropping at $\delta=0$ is fixed priority with 1~KB bursts and queue drops. $^\dagger$: outside the 5\% budget tolerance.}\label{tab:policy}
 \small\begin{tabular}{@{}lrrrr@{}}\toprule
 Policy & IMU \pone{} ($\mu$s) & Age (ms) & Drop (\%) & $E$ (mJ/frame)\\\midrule
-\input{generated/tab_policy}\bottomrule
+\csname @@input\endcsname generated/tab_policy.tex \bottomrule
 \end{tabular}\end{table*}
 Below and at the knee the matched budget is $\delta=0$ for capping, adaptive splitting and deadline-aware arbitration, so frame dropping is the fixed-priority baseline. Against it, adaptive splitting lowers the IMU \pone{} by \dImuAdaptOneTwentyAbs{}~$\mu$s at \policyFps{}~fps with no change in frame age, drop rate or energy, so H2 holds statistically. The gain is under 1\% of the 1~ms control period. Capping lowers the \pone{} slightly more but adds \dAgeCapOneTwenty{}~ms of frame age; round-robin and deadline-aware arbitration add \dAgeRROneTwenty{} and \dAgeEdfOneTwenty{}~ms. Above the knee, at 180~fps, frame dropping ties adaptive splitting and beats every other scheduler on frame age, so H3 holds; deadline-aware arbitration raises the IMU \pone{} by \dImuEdfOneEighty{}~$\mu$s, past the deadline, because late camera and NPU requests acquire smaller slack than the IMU.
 
