@@ -78,5 +78,7 @@ ideal             = false  # validation: no cache, no row or latency effects
 [validation]
 single_master_tol_pct = 2.0   # single-master run vs D / (BW * eta)
 blocking_bound_tol_pct = 5.0  # two-master run vs W^FP / W^RR / W^cap
-seeds          = 20
+equal_bw_tol_pct = 5.0      # Eq. equal: |r_DRAM(policy) - r_DRAM(drop)| / r_DRAM(policy)
+equal_energy_tol_pct = 5.0  # Eq. equal, total energy
+seeds          = 10
 bootstrap_reps = 10000

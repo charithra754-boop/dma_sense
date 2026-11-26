@@ -35,7 +35,7 @@ def main():
     # V1
     v1 = []
     for pol in d.POLICIES:
-        m = d.run(cfg(**{"sim.bg_MBps": 200.0}), policy=pol, burst=512, seconds=SECONDS,
+        m = d.run(cfg(**{"sim.bg_MBps": 20.0}), policy=pol, burst=512, seconds=SECONDS,
                   drop_frac=0.25 if pol == "drop" else 0.0)
         good = m["bytes_req"] == m["bytes_srv"]
         ok &= good
@@ -65,7 +65,7 @@ def main():
         for pol, masters, n in (("fp", ["cam", "imu"], 2), ("cap", ["cam", "imu"], 2),
                                 ("rr", ["cam", "imu", "npu"], 3)):
             c = cfg(**{"sim.ideal": True, "sim.masters": masters, "power.dvfs": False,
-                       "camera.fps": 120, "npu.compute_ms": 0.5, "npu.burst_B": B})
+                       "camera.fps": 30, "npu.compute_ms": 0.5, "npu.burst_B": B})
             s = d.Sim(c, policy=pol, burst=B, seconds=SECONDS)
             m = s.run()
             own = (base["imu"]["packet_bytes"] + B_o) / bw

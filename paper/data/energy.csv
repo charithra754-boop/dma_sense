@@ -1,6 +1,7 @@
-policy,energy
-Drop,10
-FP,11
-RR,11.5
-Capped,10.8
-Adaptive,10.6
+policy,energy,f_MHz
+Drop,2.25,84.53
+FP,2.25,84.53
+RR,2.484,84.75
+Capped,2.31,81.65
+Adaptive,2.251,84.52
+Age/deadline,2.263,81.88
