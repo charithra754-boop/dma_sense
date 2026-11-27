@@ -1,0 +1,97 @@
+{\scriptsize
+\begin{verbatim}
+
+    # Platform (option 1, 2026-11-26): flight-controller-class SoC (STM32H7-like); camera,
+    IMU and NPU share one 16-bit SDR SDRAM path.
+# DMA-Sense simulator parameters. Source of every [X] in the paper/report parameter tables.
+# status: data      = derived from the traces in this repo
+#         datasheet = standard part figure (cite in refs.bib before submission)
+#         assumed   = modelling choice; must be named as such in the paper
+# Freeze this file (commit) BEFORE the burst / frame-rate / equal-budget sweeps run.
+
+[dram]
+peak_bw_GBps = 0.2
+    # datasheet: 16-bit SDR SDRAM at 100 MHz (STM32H7-class FMC), 2 B x 100 MHz
+row_hit_ns = 30.0  # datasheet: CL = 3 cycles at 100 MHz
+row_miss_ns = 90.0  # tRP + tRCD + CL = 3 + 3 + 3 cycles
+banks = 4  # datasheet: 4-bank SDR SDRAM (e.g. IS42S16400J)
+row_bytes = 512  # datasheet: 256 columns x 16 bit
+efficiency_eta = 0.80
+    # assumed: sustained/peak; check against single-master validation run
+
+[camera]
+width          = 640    # data: every ERA clip is 640x640
+height         = 640
+bytes_per_px   = 1.5    # assumed: NV12 / YUV420 output from the ISP
+frame_bytes    = 614400 # data: 640*640*1.5 (= the 0.6 MB placeholder)
+native_fps     = 24     # data: every ERA clip is 24 fps
+fps            = 60     # default operating point (swept)
+readout_frac   = 0.9    # assumed: sensor readout spans 90% of the frame period
+fps_sweep = [15, 24, 30, 45, 60, 90, 120, 150, 180, 240]
+    # extended past 120 so the knee is inside the sweep
+burst_sweep_B  = [64, 128, 256, 512, 1024, 2048]
+
+[imu]
+rate_hz        = 1000   # assumed default; ablation 200-1000
+rate_sweep_hz  = [200, 500, 1000]
+packet_bytes   = 32
+    # assumed: 6-axis int16 + timestamp + header, padded to one 32 B beat group
+deadline_us    = 1000   # assumed: one IMU period
+jitter_frac    = 0.02
+manoeuvre_every_s   = 2.0   # mean gap between manoeuvres (exponential)
+manoeuvre_len_ms    = 200
+manoeuvre_rate_mult = 4     # telemetry rate during a manoeuvre
+
+[npu]
+input_bytes_per_frame = 614400 # assumed: reads the frame once (no resize in DRAM)
+weight_bytes_per_frame = 0     # assumed: weights cache-resident; ablation knob
+gamma_min      = 1.0
+    # share of the frame read when nothing changed (1.0 = reads whole frame; aerial runs set
+    < 1)
+burst_B        = 256    # NPU read burst
+outstanding    = 4      # NPU read bursts in flight
+compute_ms     = 4.0    # assumed NPU compute per frame after its reads
+
+[cache]
+size_KB = 16  # datasheet: Cortex-M7 L1 D-cache (STM32H7)
+ways = 4  # datasheet: Cortex-M7 D-cache
+line_B = 32  # datasheet: Cortex-M7 cache line
+write_policy   = "wb"   # "wb" | "wt"
+mshrs = 4  # assumed; ablation 2-16
+
+[queue]
+limit_frames   = 2      # ablation 1-4
+
+[power]
+static_W = 0.10  # assumed MCU-class static power
+alpha_C_V2_nJ_per_cycle = 0.25  # assumed dynamic energy per active bus/controller cycle
+e_bit_pJ = 20.0  # assumed: SDR SDRAM + FMC I/O energy per bit
+cap_W = 0.30  # assumed power cap of the memory subsystem
+f_max_MHz = 100  # matches the SDRAM clock
+v_min = 1.0  # assumed (VOS scaling)
+v_max = 1.2  # assumed
+c_eff_nF = 1.74  # assumed: ~0.25 W dynamic at f_max, V_max, full activity
+window_us      = 100    # governor window
+dvfs           = true
+dvfs_steps_MHz = [50, 67, 100]  # assumed FMC clock dividers
+
+[sim]
+burst_overhead_B = 16  # assumed B_o: 8 cycles of a 16-bit path (arbitration + command)
+cap_B = 128  # burst-capped policy: max piece
+split_B = 64  # adaptive policy: camera piece when an IMU packet is due
+cam_through_cache = true   # camera DMA allocates in the shared cache
+bg_MBps           = 0.0    # background traffic (stress / ablation)
+bg_burst_B        = 256
+drop_select       = "uniform"  # frame dropping: "uniform" or "low_change" (needs m_k)
+ideal             = false  # validation: no cache, no row or latency effects
+
+[validation]
+single_master_tol_pct = 2.0   # single-master run vs D / (BW * eta)
+blocking_bound_tol_pct = 5.0  # two-master run vs W^FP / W^RR / W^cap
+equal_bw_tol_pct = 5.0      # Eq. equal: |r_DRAM(policy) - r_DRAM(drop)| / r_DRAM(policy)
+equal_energy_tol_pct = 5.0  # Eq. equal, total energy
+seeds          = 10
+bootstrap_reps = 10000
+
+\end{verbatim}
+}
